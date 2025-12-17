@@ -2,6 +2,7 @@ import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from PIL import Image, ImageTk
 from juego import select_teams
+from settings import open_settings
 
 # =========================
 # CONTROLES FINOS DEL PANEL
@@ -53,7 +54,7 @@ def main_menu(app: tb.Window):
     tb.Button(
         panel, text="Configuraciones",
         bootstyle="secondary-outline",
-        command=lambda: print("Configuraciones (pendiente)")
+        command=lambda: open_settings(app, on_back=lambda: main_menu(app))
     ).pack(fill=X, pady=BTN_PADY)
 
     tb.Button(
