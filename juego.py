@@ -1,3 +1,4 @@
+#juego.py
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from tablero import iniciar_tablero

@@ -1,3 +1,4 @@
+#settings.py
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 

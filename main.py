@@ -1,8 +1,10 @@
+#main.py
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from PIL import Image, ImageTk
 from juego import select_teams
 from settings import open_settings
+from dbPreguntas import crear_db, contar_preguntas, cargar_banco_200
 
 # =========================
 # CONTROLES FINOS DEL PANEL
@@ -90,6 +92,12 @@ def main_menu(app: tb.Window):
 
 
 if __name__ == "__main__":
+
+    # 👉 SOLO ESTO ES NUEVO (inicializa la base)
+    crear_db()
+    if contar_preguntas() == 0:
+        cargar_banco_200()
+
     app = tb.Window(themename="darkly")
     main_menu(app)
     app.mainloop()
