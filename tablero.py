@@ -2,23 +2,16 @@
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from dbPreguntas import obtener_pregunta_random, marcar_pregunta_usada
-DIFICULTAD_MAP = {
-    100: 1,
-    200: 2,
-    300: 3,
-    400: 4,
-    500: 5
-}
 
 CATEGORIAS_DEFAULT = ["Historia", "Personajes", "Lugares", "Milagros", "Versículos"]
 VALORES_DEFAULT = [100, 200, 300, 400, 500]
 
 PASTELES = [
-    {"bg": "#AFC9F5", "fg": "#0D1B2A"},  # azul pastel
-    {"bg": "#BFE6C6", "fg": "#0B1F13"},  # verde pastel
-    {"bg": "#F7E6A8", "fg": "#2A2200"},  # amarillo pastel
-    {"bg": "#F3B7B7", "fg": "#2A0A0A"},  # rojo pastel
-    {"bg": "#D7C6F7", "fg": "#1C102A"},  # morado pastel
+    {"bg": "#AFC9F5", "fg": "#0D1B2A"},
+    {"bg": "#BFE6C6", "fg": "#0B1F13"},
+    {"bg": "#F7E6A8", "fg": "#2A2200"},
+    {"bg": "#F3B7B7", "fg": "#2A0A0A"},
+    {"bg": "#D7C6F7", "fg": "#1C102A"},
 ]
 
 
@@ -46,13 +39,13 @@ def _init_styles(app: tb.Window):
             background=bg,
             foreground=fg,
             bordercolor="#2b2b2b",
-            focusthickness=0
+            focusthickness=0,
         )
         style.map(
             f"pastel{i}.TButton",
             background=[("active", bg), ("pressed", bg)],
             foreground=[("active", fg), ("pressed", fg)],
-            relief=[("pressed", "sunken")]
+            relief=[("pressed", "sunken")],
         )
 
         style.configure(
@@ -61,7 +54,7 @@ def _init_styles(app: tb.Window):
             padding=(8, 18),
             background="#3f3f3f",
             foreground="#cfcfcf",
-            bordercolor="#2b2b2b"
+            bordercolor="#2b2b2b",
         )
 
         style.configure(
@@ -69,26 +62,29 @@ def _init_styles(app: tb.Window):
             font=("Segoe UI", 12, "bold"),
             background=bg,
             foreground=fg,
-            padding=10
+            padding=10,
         )
 
     style.configure("team_active.TFrame", borderwidth=2, relief="solid")
     style.configure("team_inactive.TFrame", borderwidth=0, relief="flat")
+
+
 def precargar_preguntas(app, categorias, valores):
+    """
+    Carga 25 preguntas (5x5) UNA sola vez (al entrar al tablero).
+    IMPORTANTE:
+    - No uses lower() si tu BD guarda "Historia", etc.
+    - NO marcar usada aquí (se marca cuando el usuario responde o se acaba el tiempo)
+    """
     tablero = [[None for _ in range(5)] for _ in range(5)]
 
     for c in range(5):
-        categoria = categorias[c].strip().lower()
+        categoria = categorias[c].strip()
 
         for r in range(5):
-            valor = valores[r]
-            dificultad = DIFICULTAD_MAP.get(valor, 1)
-
-            q = obtener_pregunta_random(categoria, dificultad)
+            valor = valores[r]  # 100,200,300,400,500
+            q = obtener_pregunta_random(categoria, valor)
             tablero[r][c] = q
-
-            if q:
-                marcar_pregunta_usada(q["id"])  # evita repetidas
 
     app._preguntas_tablero = tablero
 
@@ -101,9 +97,12 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
     categorias = categorias if categorias and len(categorias) == 5 else CATEGORIAS_DEFAULT
     valores = valores if valores and len(valores) == 5 else VALORES_DEFAULT
 
+    # Precargar SOLO si no existe (para no consultar en cada click)
+    if not hasattr(app, "_preguntas_tablero"):
+        precargar_preguntas(app, categorias, valores)
+
     equipos = getattr(app, "_equipos", ["Equipo 1", "Equipo 2"])[:4]
 
-    # Puntajes
     if not hasattr(app, "_puntos"):
         app._puntos = {n: 0 for n in equipos}
     else:
@@ -114,13 +113,11 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
             if n not in equipos:
                 del app._puntos[n]
 
-    # Equipo activo
     if not hasattr(app, "_equipo_activo"):
         app._equipo_activo = 0
     if app._equipo_activo >= len(equipos):
         app._equipo_activo = 0
 
-    # Celdas usadas
     if not hasattr(app, "_tablero_usados"):
         app._tablero_usados = [[False for _ in range(5)] for _ in range(5)]
 
@@ -227,6 +224,7 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
 
         feedback.configure(text="⏱️ Tiempo agotado", bootstyle="warning")
 
+        # ✅ marcar usada la pregunta cuando se usó
         marcar_pregunta_usada(q["id"])
         marcar_celda_usada(current_q["r"], current_q["c"])
 
@@ -274,6 +272,7 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
         else:
             feedback.configure(text=f"❌ Incorrecto • Correcta: {q['respuesta_correcta']}", bootstyle="danger")
 
+        # ✅ marcar usada la pregunta cuando se usó
         marcar_pregunta_usada(q["id"])
         marcar_celda_usada(current_q["r"], current_q["c"])
 
@@ -329,15 +328,16 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
         categoria = categorias[c]
         valor = valores[r]
 
-        q = obtener_pregunta_random(categoria, valor)
+        # ✅ SIN CONSULTA: usamos lo precargado
+        q = app._preguntas_tablero[r][c]
         if q is None:
             tb.ToastNotification(
-                title="Sin preguntas",
-                message=f"No hay preguntas para {categoria} ({valor}).",
+                title="Sin pregunta",
+                message=f"No hay pregunta asignada para {categoria} ({valor}).",
                 duration=2000,
                 position=tb.BOTTOM_RIGHT
             ).show_toast()
-            return  # 👈 SALE SIN MARCAR CELDA
+            return
 
         current_q["data"] = q
         current_q["r"] = r
