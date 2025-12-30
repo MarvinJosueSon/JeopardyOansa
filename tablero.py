@@ -155,26 +155,45 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
         box.pack(side="left", fill=X, expand=True, padx=6)
         tb.Label(box, text=categorias[c], style=f"pastel{c}_head.TLabel", anchor="center").pack(fill=X)
 
-    # ===== Overlay pregunta =====
-    overlay = tb.Frame(root, padding=18, bootstyle="secondary")
+    # ===== Overlay pregunta (CARD) =====
+    overlay = tb.Frame(root, bootstyle="dark")  # fondo oscuro
     overlay.place_forget()
 
-    overlay_title = tb.Label(overlay, text="", font=("Segoe UI", 16, "bold"))
-    overlay_title.pack(pady=(0, 6))
+    # tarjeta central
+    card = tb.Frame(overlay, padding=22, bootstyle="secondary")
+    card.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.88, relheight=0.72)
 
-    timer_row = tb.Frame(overlay)
-    timer_row.pack(fill=X, pady=(0, 10))
-    timer_lbl = tb.Label(timer_row, text="", font=("Segoe UI", 12, "bold"))
+    # header bonito
+    head = tb.Frame(card, bootstyle="secondary")
+    head.pack(fill=X)
+
+    badge_cat = tb.Label(head, text="", bootstyle="inverse-primary", padding=(10, 6))
+    badge_cat.pack(side="left")
+
+    badge_pts = tb.Label(head, text="", bootstyle="inverse-secondary", padding=(10, 6))
+    badge_pts.pack(side="left", padx=8)
+
+    timer_lbl = tb.Label(head, text="", bootstyle="inverse-warning", padding=(10, 6))
     timer_lbl.pack(side="right")
 
-    overlay_text = tb.Label(overlay, text="", wraplength=760, justify="center", font=("Segoe UI", 13))
-    overlay_text.pack(pady=(0, 14))
+    # separador
+    tb.Separator(card).pack(fill=X, pady=14)
 
-    answers_box = tb.Frame(overlay)
-    answers_box.pack(fill=X)
+    # pregunta
+    overlay_text = tb.Label(
+        card,
+        text="",
+        wraplength=860,
+        justify="center",
+        font=("Segoe UI", 16),
+    )
+    overlay_text.pack(fill=X, pady=(0, 14))
 
-    feedback = tb.Label(overlay, text="", font=("Segoe UI", 12, "bold"))
-    feedback.pack(pady=(12, 0))
+    answers_box = tb.Frame(card)
+    answers_box.pack(fill=X, pady=(6, 6))
+
+    feedback = tb.Label(card, text="", font=("Segoe UI", 12, "bold"))
+    feedback.pack(pady=(10, 0))
 
     # ===== control timer =====
     timer_job = {"id": None}
@@ -204,11 +223,21 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
         current_q["valor"] = None
 
     def mostrar_overlay(titulo: str, enunciado: str):
-        overlay_title.configure(text=titulo)
+        # titulo viene como "Lugares • 100 pts"
         overlay_text.configure(text=enunciado)
-        overlay.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.92, relheight=0.62)
-        overlay.lift()  # 🔥 sube el overlay por encima del tablero
-        overlay.focus_force()  # opcional, para que “agarre” foco
+
+        # separar categoria y puntos si viene en ese formato
+        try:
+            parte1, parte2 = titulo.split("•")
+            badge_cat.configure(text=parte1.strip())
+            badge_pts.configure(text=parte2.strip())
+        except Exception:
+            badge_cat.configure(text=titulo)
+            badge_pts.configure(text="")
+
+        overlay.place(relx=0.5, rely=0.5, anchor="center", relwidth=1.0, relheight=1.0)
+        overlay.lift()
+        overlay.focus_force()
 
     def marcar_celda_usada(r, c):
         app._tablero_usados[r][c] = True
