@@ -138,6 +138,13 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
 
     tb.Button(top, text="⟵ Volver", bootstyle="secondary", command=on_back).pack(side="left")
     tb.Label(top, text="Tablero 5×5", font=("Segoe UI", 18, "bold")).pack(side="left", padx=14)
+    turno_lbl = tb.Label(
+        top,
+        text="",
+        font=("Segoe UI", 14, "bold"),
+        bootstyle="info"
+    )
+    turno_lbl.pack(side="right", padx=10)
 
     # ===== Header categorías =====
     header = tb.Frame(root)
@@ -235,6 +242,8 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
         marcar_pregunta_usada(q["id"])
         marcar_celda_usada(current_q["r"], current_q["c"])
 
+        siguiente_turno()  # 👈 CAMBIO AUTOMÁTICO DE TURNO
+
         overlay.after(1400, cerrar_overlay)
 
     def _tick():
@@ -259,6 +268,10 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
         timer_state["seconds"] = t
         _tick()
 
+    def siguiente_turno():
+        app._equipo_activo = (app._equipo_activo + 1) % len(equipos)
+        refrescar_equipo_activo()
+
     def responder(seleccion_texto):
         q = current_q["data"]
         if not q:
@@ -282,6 +295,8 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
         # ✅ marcar usada la pregunta cuando se usó
         marcar_pregunta_usada(q["id"])
         marcar_celda_usada(current_q["r"], current_q["c"])
+
+        siguiente_turno()  # 👈 AQUI CAMBIA AL SIGUIENTE EQUIPO
 
         overlay.after(1400, cerrar_overlay)
 
@@ -386,7 +401,13 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
 
     def refrescar_equipo_activo():
         for i, (frame, _, __) in enumerate(tarjetas):
-            frame.configure(style=("team_active.TFrame" if i == app._equipo_activo else "team_inactive.TFrame"))
+            frame.configure(
+                style=("team_active.TFrame" if i == app._equipo_activo else "team_inactive.TFrame")
+            )
+
+        # 🔔 actualizar texto de turno
+        nombre = equipos[app._equipo_activo]
+        turno_lbl.configure(text=f"Turno de: {nombre}")
 
     for i, nombre in enumerate(equipos):
         card = tb.Frame(scoreboard, padding=10)
