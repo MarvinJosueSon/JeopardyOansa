@@ -92,6 +92,11 @@ def precargar_preguntas(app, categorias, valores):
 def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
     _clear(app)
     _ensure_settings(app)
+    if hasattr(app, "_preguntas_tablero"):
+        delattr(app, "_preguntas_tablero")
+    if hasattr(app, "_tablero_usados"):
+        delattr(app, "_tablero_usados")
+
     _init_styles(app)
 
     categorias = categorias if categorias and len(categorias) == 5 else CATEGORIAS_DEFAULT
@@ -195,6 +200,8 @@ def iniciar_tablero(app: tb.Window, on_back, categorias=None, valores=None):
         overlay_title.configure(text=titulo)
         overlay_text.configure(text=enunciado)
         overlay.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.92, relheight=0.62)
+        overlay.lift()  # 🔥 sube el overlay por encima del tablero
+        overlay.focus_force()  # opcional, para que “agarre” foco
 
     def marcar_celda_usada(r, c):
         app._tablero_usados[r][c] = True

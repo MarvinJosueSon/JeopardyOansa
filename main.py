@@ -95,6 +95,11 @@ if __name__ == "__main__":
 
     # 👉 SOLO ESTO ES NUEVO (inicializa la base)
     crear_db()
+    from dbPreguntas import DB_NAME
+
+    print("DB:", DB_NAME)
+    print("Preguntas:", contar_preguntas())
+
     if contar_preguntas() == 0:
         cargar_banco_200()
 
